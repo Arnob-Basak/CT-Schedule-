@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Editable CT exam schedule and next-exam tracker for CSE 17th Batch.">
+  <title>CT Exam Dashboard</title>
+  <script>
+    (() => {
+      let savedTheme = null;
+      try {
+        savedTheme = localStorage.getItem("ct-dashboard-theme");
+      } catch (error) {
+        // The browser's preferred theme is used when storage is unavailable.
+      }
+      const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.dataset.theme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : preferredTheme;
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="top">
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="CT dashboard home">
+        <span class="brand-mark">CT</span>
+        <span><b>Exam Dashboard</b><small>CSE 17th Batch</small></span>
+      </a>
+      <div class="header-actions">
+        <button class="theme-toggle" type="button" id="themeToggleButton" aria-label="Switch to dark theme" title="Switch to dark theme">
+          <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+          <span class="theme-toggle-text">Dark</span>
+        </button>
+        <button class="manage-button" type="button" id="openManagerButton"><span>✎</span> Manage CTs</button>
+        <div class="semester-pill"><span></span> 4th Year · 1st Semester</div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> YOUR CT ROADMAP · 2026</p>
+        <h1>Stay ready for<br><em>what's next.</em></h1>
+        <p class="hero-description">All class tests, arranged into one clear plan. See your next exam, follow your progress, and browse the full semester at a glance.</p>
+
+        <div class="progress-wrap">
+          <div class="progress-copy"><span>Semester progress</span><b id="progressText">0% complete</b></div>
+          <div class="progress-track"><span id="progressBar"></span></div>
+          <div class="progress-numbers"><span id="doneCount">0 done</span><span id="remainingCount">0 remaining</span></div>
+        </div>
+      </div>
+
+      <aside class="next-card" aria-live="polite">
+        <div class="next-card-top">
+          <span class="next-label"><i></i> <span id="nextLabelText">Next class test</span></span>
+        </div>
+        <div id="nextExamContent"></div>
+      </aside>
+    </section>
+
+    <section class="schedule-section" id="schedule">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow"><span></span> FULL SCHEDULE</p>
+          <h2>Your semester, mapped out.</h2>
+        </div>
+        <p>Filter by subject or month, then switch views to see the plan your way.</p>
+      </div>
+
+      <div class="toolbar">
+        <div class="course-filters" id="courseFilters" role="group" aria-label="Filter by course"></div>
+        <div class="toolbar-right">
+          <label class="month-select">
+            <span class="sr-only">Filter by month</span>
+            <select id="monthFilter" aria-label="Filter by month"></select>
+          </label>
+          <div class="view-switch" role="group" aria-label="Change schedule view">
+            <button type="button" id="timelineButton" class="active" aria-label="Timeline view" title="Timeline view"><span class="list-icon"></span></button>
+            <button type="button" id="calendarButton" aria-label="Calendar view" title="Calendar view"><span class="grid-icon"></span></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="scheduleContent"></div>
+    </section>
+
+    <section class="course-key">
+      <div>
+        <p class="eyebrow"><span></span> COURSE KEY</p>
+        <h2>Your courses at a glance.</h2>
+      </div>
+      <div class="course-grid" id="courseGrid"></div>
+    </section>
+
+    <footer>
+      <span><b>CT</b> Exam Dashboard</span>
+      <p>CSE 17th Batch · 4th Year, 1st Semester</p>
+      <a href="#top">Back to top ↑</a>
+      <p class="footer-credit">@Arnob Basak</p>
+    </footer>
+
+    <div class="manager-overlay" id="managerModal" role="dialog" aria-modal="true" aria-labelledby="managerTitle" hidden>
+      <section class="manager-panel">
+        <header class="manager-header">
+          <div>
+            <p class="eyebrow"><span></span> EASY SCHEDULE EDITOR</p>
+            <h2 id="managerTitle">Manage your CT details</h2>
+            <p>Edit the date, teacher and exam topics. Save once and the complete dashboard will update automatically.</p>
+          </div>
+          <button class="manager-close" id="closeManagerButton" type="button" aria-label="Close schedule editor">×</button>
+        </header>
+
+        <div class="manager-filter-bar">
+          <div class="manager-filter-copy">
+            <b>Filter CT cards</b>
+            <span id="managerFilterSummary">Showing all courses</span>
+          </div>
+          <div class="course-filters manager-course-filters" id="managerCourseFilters" role="group" aria-label="Filter editable CT cards by course"></div>
+        </div>
+
+        <div class="manager-list" id="managerList"></div>
+
+        <section class="add-exam-box">
+          <div><b>Add a new CT</b><span>Add the schedule, teacher and topics in one place.</span></div>
+          <label><span>Course</span><select id="newCourse"></select></label>
+          <label><span>CT no.</span><input id="newCt" min="1" type="number" value="1"></label>
+          <label><span>Date</span><input id="newDate" type="date"></label>
+          <label><span>Teacher / Sir</span><input id="newTeacher" type="text" placeholder="e.g. Dr. Rahman Sir"></label>
+          <label class="new-topics-field"><span>Exam topics</span><textarea id="newTopics" rows="2" placeholder="Write topics separated by commas or new lines"></textarea></label>
+          <button type="button" id="addExamButton">+ Add CT</button>
+        </section>
+
+        <div class="manager-actions">
+          <button class="reset-button" type="button" id="resetScheduleButton">Restore defaults</button>
+          <div>
+            <button class="cancel-button" type="button" id="cancelManagerButton">Cancel</button>
+            <button class="save-button" type="button" id="saveScheduleButton">Save changes</button>
+          </div>
+        </div>
+        <p class="manager-note">Saved on this browser. Refreshing the page will not remove your changes.</p>
+      </section>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
